@@ -1,3 +1,16 @@
+## 0.0.5
+
+*   **Theme Generation**:
+    *   `init` command now generates `lib/common/themes/` with `m_color.dart`, `m_text_theme.dart`, `m_theme.dart`.
+    *   Includes complete light/dark theme configuration with Material 3 and GoogleFonts support.
+*   **Firebase & Flavorizr Setup**:
+    *   `init` command now creates `.firebase/dev/` and `.firebase/prod/` with `google-services.json` and `GoogleService-Info.plist` placeholders.
+    *   Generates `lib/firebase_options.dart` with flavor-aware configuration.
+    *   Automatically appends `flavorizr` configuration to `pubspec.yaml`.
+    *   Runs `flutter pub run flutter_flavorizr` after setup.
+*   **Cleanup**:
+    *   Removed unused `lib/core/style` folder generation.
+
 ## 0.0.4
 
 *   **App Entry Point Generation**:

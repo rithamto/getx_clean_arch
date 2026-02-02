@@ -57,7 +57,7 @@ class InitCommand extends Command<int> {
     }
 
     // 3. Create Core Module structure
-    _createCoreStructure(basePath);
+    _createCoreStructure(basePath, importPrefix);
 
     // 4. Create DI
     _createDependencyInjection(basePath);
@@ -67,6 +67,12 @@ class InitCommand extends Command<int> {
 
     // 6. Create App Entry Point (app.dart and main.dart)
     _createAppEntryPoint(basePath, importPrefix);
+
+    // 7. Create Firebase Config
+    await _createFirebaseConfig(basePath, importPrefix);
+
+    // 8. Run Flavorizr
+    await _runFlavorizr(basePath);
 
     logger.success('Project initialized successfully!');
     return ExitCode.success.code;
@@ -81,25 +87,36 @@ class InitCommand extends Command<int> {
     }
   }
 
-  void _createCoreStructure(String basePath) {
+  void _createCoreStructure(String basePath, String importPrefix) {
     FileUtils.createDirectory('$basePath/lib/core/network', logger: logger);
-    FileUtils.createDirectory('$basePath/lib/core/theme', logger: logger);
-    FileUtils.createDirectory('$basePath/lib/core/style', logger: logger);
 
-    // Add Dio wrapper or other core files here if needed
+    // Dio wrapper
     FileUtils.createFile(
       '$basePath/lib/core/network/dio_client.dart',
       _dioClientContent,
       logger: logger,
     );
+
+    // Theme structure
+    FileUtils.createDirectory('$basePath/lib/common/themes', logger: logger);
     FileUtils.createFile(
-      '$basePath/lib/core/theme/app_theme.dart',
-      '// App Theme',
+      '$basePath/lib/common/themes/m_color.dart',
+      Templates.mColors(),
       logger: logger,
     );
     FileUtils.createFile(
-      '$basePath/lib/core/style/app_style.dart',
-      '// App Style',
+      '$basePath/lib/common/themes/m_text_theme.dart',
+      Templates.mTextTheme(importPrefix),
+      logger: logger,
+    );
+    FileUtils.createFile(
+      '$basePath/lib/common/themes/m_theme.dart',
+      Templates.mTheme(importPrefix),
+      logger: logger,
+    );
+    FileUtils.createFile(
+      '$basePath/lib/common/themes/themes.dart',
+      Templates.themesBarrel,
       logger: logger,
     );
   }
@@ -175,5 +192,77 @@ class DependencyInjection {
       }
     }
     return 'my_app';
+  }
+
+  Future<void> _createFirebaseConfig(
+    String basePath,
+    String importPrefix,
+  ) async {
+    logger.info('Creating Firebase configuration...');
+
+    // Create .firebase directory structure
+    FileUtils.createDirectory('$basePath/.firebase/dev', logger: logger);
+    FileUtils.createDirectory('$basePath/.firebase/prod', logger: logger);
+
+    // Create google-services.json for each flavor
+    FileUtils.createFile(
+      '$basePath/.firebase/dev/google-services.json',
+      Templates.googleServicesJson('dev'),
+      logger: logger,
+    );
+    FileUtils.createFile(
+      '$basePath/.firebase/prod/google-services.json',
+      Templates.googleServicesJson('prod'),
+      logger: logger,
+    );
+
+    // Create GoogleService-Info.plist for each flavor
+    FileUtils.createFile(
+      '$basePath/.firebase/dev/GoogleService-Info.plist',
+      Templates.googleServiceInfoPlist('dev'),
+      logger: logger,
+    );
+    FileUtils.createFile(
+      '$basePath/.firebase/prod/GoogleService-Info.plist',
+      Templates.googleServiceInfoPlist('prod'),
+      logger: logger,
+    );
+
+    // Create firebase_options.dart
+    FileUtils.createFile(
+      '$basePath/lib/firebase_options.dart',
+      Templates.firebaseOptions(importPrefix),
+      logger: logger,
+    );
+
+    // Append flavorizr config to pubspec.yaml
+    final pubspecFile = File('$basePath/pubspec.yaml');
+    if (await pubspecFile.exists()) {
+      final content = await pubspecFile.readAsString();
+      if (!content.contains('flavorizr:')) {
+        await pubspecFile.writeAsString(content + Templates.flavorizrConfig);
+        logger.detail('Added flavorizr configuration to pubspec.yaml');
+      }
+    }
+
+    logger.success('Firebase configuration created.');
+  }
+
+  Future<void> _runFlavorizr(String basePath) async {
+    logger.info('Running flutter_flavorizr...');
+
+    final result = await Process.run('flutter', [
+      'pub',
+      'run',
+      'flutter_flavorizr',
+    ], workingDirectory: basePath);
+
+    if (result.exitCode == 0) {
+      logger.success('Flavorizr completed successfully.');
+    } else {
+      logger.warn('Flavorizr failed. You may need to run it manually:');
+      logger.warn('  cd $basePath && flutter pub run flutter_flavorizr');
+      logger.detail(result.stderr.toString());
+    }
   }
 }

@@ -206,4 +206,353 @@ class AppState extends State<App> with WidgetsBindingObserver {
 }
 ''';
   }
+
+  // ==================== THEME TEMPLATES ====================
+
+  static String mColors() {
+    return '''
+import 'package:flutter/material.dart';
+
+/// Color palette for the application.
+/// Access colors via `MColors.primary`, `MColors.secondary`, etc.
+class MColors {
+  MColors._();
+
+  // Primary Palette
+  static const Color primary = Color(0xFF4CAF50);
+  static const Color primaryDark = Color(0xFF388E3C);
+  static const Color primaryLight = Color(0xFFC8E6C9);
+  static const Color primaryForDark = Color(0xFF81C784);
+
+  // Secondary Palette
+  static const Color secondary = Color(0xFF03A9F4);
+  static const Color secondaryDark = Color(0xFF0288D1);
+  static const Color secondaryLight = Color(0xFFB3E5FC);
+
+  // Neutral Colors
+  static const Color backgroundLight = Color(0xFFF5F5F5);
+  static const Color backgroundDark = Color(0xFF121212);
+  static const Color surfaceLight = Color(0xFFFFFFFF);
+  static const Color surfaceDark = Color(0xFF1E1E1E);
+
+  // Text Colors
+  static const Color textLight = Color(0xFF212121);
+  static const Color textDark = Color(0xFFE0E0E0);
+  static const Color textSecondaryLight = Color(0xFF757575);
+  static const Color textSecondaryDark = Color(0xFFBDBDBD);
+
+  // Status Colors
+  static const Color error = Color(0xFFD32F2F);
+  static const Color success = Color(0xFF388E3C);
+  static const Color warning = Color(0xFFFFA000);
+  static const Color info = Color(0xFF1976D2);
+}
+''';
+  }
+
+  static String mTextTheme(String importPrefix) {
+    return '''
+import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:$importPrefix/common/themes/m_color.dart';
+
+/// Text theme configuration using Google Fonts.
+class MTextTheme {
+  MTextTheme._();
+
+  static final fontFamily = GoogleFonts.inter().fontFamily;
+
+  static TextTheme get lightTextTheme => _baseTextTheme(MColors.textLight);
+  static TextTheme get darkTextTheme => _baseTextTheme(MColors.textDark);
+
+  static TextTheme _baseTextTheme(Color color) {
+    return TextTheme(
+      displayLarge: TextStyle(fontSize: 57, fontWeight: FontWeight.w400, color: color),
+      displayMedium: TextStyle(fontSize: 45, fontWeight: FontWeight.w400, color: color),
+      displaySmall: TextStyle(fontSize: 36, fontWeight: FontWeight.w400, color: color),
+      headlineLarge: TextStyle(fontSize: 32, fontWeight: FontWeight.w400, color: color),
+      headlineMedium: TextStyle(fontSize: 28, fontWeight: FontWeight.w400, color: color),
+      headlineSmall: TextStyle(fontSize: 24, fontWeight: FontWeight.w400, color: color),
+      titleLarge: TextStyle(fontSize: 22, fontWeight: FontWeight.w500, color: color),
+      titleMedium: TextStyle(fontSize: 16, fontWeight: FontWeight.w500, color: color),
+      titleSmall: TextStyle(fontSize: 14, fontWeight: FontWeight.w500, color: color),
+      bodyLarge: TextStyle(fontSize: 16, fontWeight: FontWeight.w400, color: color),
+      bodyMedium: TextStyle(fontSize: 14, fontWeight: FontWeight.w400, color: color),
+      bodySmall: TextStyle(fontSize: 12, fontWeight: FontWeight.w400, color: color),
+      labelLarge: TextStyle(fontSize: 14, fontWeight: FontWeight.w500, color: color),
+      labelMedium: TextStyle(fontSize: 12, fontWeight: FontWeight.w500, color: color),
+      labelSmall: TextStyle(fontSize: 11, fontWeight: FontWeight.w500, color: color),
+    );
+  }
+}
+''';
+  }
+
+  static String mTheme(String importPrefix) {
+    return '''
+import 'package:flutter/material.dart';
+import 'package:$importPrefix/common/themes/m_color.dart';
+import 'package:$importPrefix/common/themes/m_text_theme.dart';
+
+/// Application theme configuration.
+/// Use `MTheme.light` and `MTheme.dark` for theme data.
+class MTheme {
+  MTheme._();
+
+  // Light Theme
+  static ThemeData get light => ThemeData(
+    useMaterial3: true,
+    brightness: Brightness.light,
+    primaryColor: MColors.primary,
+    scaffoldBackgroundColor: MColors.backgroundLight,
+    cardColor: Colors.white,
+    canvasColor: MColors.surfaceLight,
+    colorScheme: const ColorScheme(
+      brightness: Brightness.light,
+      primary: MColors.primary,
+      onPrimary: Colors.white,
+      secondary: MColors.secondary,
+      onSecondary: Colors.white,
+      surface: Colors.white,
+      onSurface: MColors.textLight,
+      error: MColors.error,
+      onError: Colors.white,
+    ),
+    fontFamily: MTextTheme.fontFamily,
+    textTheme: MTextTheme.lightTextTheme,
+    appBarTheme: const AppBarTheme(
+      backgroundColor: MColors.backgroundLight,
+      surfaceTintColor: Colors.transparent,
+      elevation: 0,
+      iconTheme: IconThemeData(color: MColors.textLight),
+      titleTextStyle: TextStyle(
+        color: MColors.textLight,
+        fontSize: 20,
+        fontWeight: FontWeight.w600,
+      ),
+    ),
+  );
+
+  // Dark Theme
+  static ThemeData get dark => ThemeData(
+    useMaterial3: true,
+    brightness: Brightness.dark,
+    primaryColor: MColors.primaryForDark,
+    scaffoldBackgroundColor: MColors.backgroundDark,
+    cardColor: MColors.surfaceDark,
+    canvasColor: MColors.surfaceDark,
+    colorScheme: const ColorScheme(
+      brightness: Brightness.dark,
+      primary: MColors.primaryForDark,
+      onPrimary: Colors.black,
+      secondary: MColors.secondaryLight,
+      onSecondary: Colors.black,
+      surface: MColors.surfaceDark,
+      onSurface: MColors.textDark,
+      error: MColors.error,
+      onError: Colors.white,
+    ),
+    fontFamily: MTextTheme.fontFamily,
+    textTheme: MTextTheme.darkTextTheme,
+    appBarTheme: const AppBarTheme(
+      backgroundColor: MColors.backgroundDark,
+      surfaceTintColor: Colors.transparent,
+      elevation: 0,
+      iconTheme: IconThemeData(color: MColors.textDark),
+      titleTextStyle: TextStyle(
+        color: MColors.textDark,
+        fontSize: 20,
+        fontWeight: FontWeight.w600,
+      ),
+    ),
+  );
+}
+''';
+  }
+
+  static String get themesBarrel => '''
+export 'm_color.dart';
+export 'm_text_theme.dart';
+export 'm_theme.dart';
+''';
+
+  // ==================== FIREBASE TEMPLATES ====================
+
+  static String firebaseOptions(String importPrefix) {
+    return '''
+// File generated by getx_clean_arch CLI.
+// Replace with actual Firebase configuration from FlutterFire CLI.
+
+import 'package:firebase_core/firebase_core.dart' show FirebaseOptions;
+import 'package:flutter/foundation.dart'
+    show defaultTargetPlatform, kIsWeb, TargetPlatform;
+
+class DefaultFirebaseOptions {
+  static FirebaseOptions get currentPlatform {
+    // Check flavor
+    const flavor = String.fromEnvironment('FLAVOR', defaultValue: 'dev');
+    
+    if (kIsWeb) {
+      throw UnsupportedError('Web is not supported.');
+    }
+    switch (defaultTargetPlatform) {
+      case TargetPlatform.android:
+        return flavor == 'prod' ? androidProd : androidDev;
+      case TargetPlatform.iOS:
+        return flavor == 'prod' ? iosProd : iosDev;
+      default:
+        throw UnsupportedError('Unsupported platform.');
+    }
+  }
+
+  // DEV - Android
+  static const FirebaseOptions androidDev = FirebaseOptions(
+    apiKey: 'YOUR_DEV_API_KEY',
+    appId: 'YOUR_DEV_APP_ID',
+    messagingSenderId: 'YOUR_DEV_SENDER_ID',
+    projectId: 'YOUR_DEV_PROJECT_ID',
+    storageBucket: 'YOUR_DEV_STORAGE_BUCKET',
+  );
+
+  // DEV - iOS
+  static const FirebaseOptions iosDev = FirebaseOptions(
+    apiKey: 'YOUR_DEV_API_KEY',
+    appId: 'YOUR_DEV_APP_ID',
+    messagingSenderId: 'YOUR_DEV_SENDER_ID',
+    projectId: 'YOUR_DEV_PROJECT_ID',
+    storageBucket: 'YOUR_DEV_STORAGE_BUCKET',
+    iosBundleId: 'com.example.app.dev',
+  );
+
+  // PROD - Android
+  static const FirebaseOptions androidProd = FirebaseOptions(
+    apiKey: 'YOUR_PROD_API_KEY',
+    appId: 'YOUR_PROD_APP_ID',
+    messagingSenderId: 'YOUR_PROD_SENDER_ID',
+    projectId: 'YOUR_PROD_PROJECT_ID',
+    storageBucket: 'YOUR_PROD_STORAGE_BUCKET',
+  );
+
+  // PROD - iOS
+  static const FirebaseOptions iosProd = FirebaseOptions(
+    apiKey: 'YOUR_PROD_API_KEY',
+    appId: 'YOUR_PROD_APP_ID',
+    messagingSenderId: 'YOUR_PROD_SENDER_ID',
+    projectId: 'YOUR_PROD_PROJECT_ID',
+    storageBucket: 'YOUR_PROD_STORAGE_BUCKET',
+    iosBundleId: 'com.example.app',
+  );
+}
+''';
+  }
+
+  static String googleServicesJson(String flavor) {
+    final suffix = flavor == 'dev' ? '.dev' : '';
+    return '''
+{
+  "project_info": {
+    "project_number": "YOUR_PROJECT_NUMBER",
+    "project_id": "your-$flavor-project-id",
+    "storage_bucket": "your-$flavor-project-id.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:YOUR_PROJECT_NUMBER:android:YOUR_APP_HASH",
+        "android_client_info": {
+          "package_name": "com.example.app$suffix"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "YOUR_API_KEY_HERE"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
+''';
+  }
+
+  static String googleServiceInfoPlist(String flavor) {
+    final suffix = flavor == 'dev' ? '.dev' : '';
+    return '''
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>CLIENT_ID</key>
+    <string>YOUR_CLIENT_ID.apps.googleusercontent.com</string>
+    <key>REVERSED_CLIENT_ID</key>
+    <string>com.googleusercontent.apps.YOUR_CLIENT_ID</string>
+    <key>API_KEY</key>
+    <string>YOUR_API_KEY</string>
+    <key>GCM_SENDER_ID</key>
+    <string>YOUR_SENDER_ID</string>
+    <key>PLIST_VERSION</key>
+    <string>1</string>
+    <key>BUNDLE_ID</key>
+    <string>com.example.app$suffix</string>
+    <key>PROJECT_ID</key>
+    <string>your-$flavor-project-id</string>
+    <key>STORAGE_BUCKET</key>
+    <string>your-$flavor-project-id.appspot.com</string>
+    <key>IS_ADS_ENABLED</key>
+    <false></false>
+    <key>IS_ANALYTICS_ENABLED</key>
+    <false></false>
+    <key>IS_APPINVITE_ENABLED</key>
+    <true></true>
+    <key>IS_GCM_ENABLED</key>
+    <true></true>
+    <key>IS_SIGNIN_ENABLED</key>
+    <true></true>
+    <key>GOOGLE_APP_ID</key>
+    <string>YOUR_GOOGLE_APP_ID</string>
+</dict>
+</plist>
+''';
+  }
+
+  static String get flavorizrConfig => '''
+
+# Flutter Flavorizr Configuration
+flavorizr:
+  app:
+    android:
+      flavorDimensions: "flavor-type"
+    ios:
+  
+  flavors:
+    dev:
+      app:
+        name: "App Dev"
+      android:
+        applicationId: "com.example.app.dev"
+        firebase:
+          config: ".firebase/dev/google-services.json"
+      ios:
+        bundleId: "com.example.app.dev"
+        firebase:
+          config: ".firebase/dev/GoogleService-Info.plist"
+
+    prod:
+      app:
+        name: "App"
+      android:
+        applicationId: "com.example.app"
+        firebase:
+          config: ".firebase/prod/google-services.json"
+      ios:
+        bundleId: "com.example.app"
+        firebase:
+          config: ".firebase/prod/GoogleService-Info.plist"
+''';
 }
