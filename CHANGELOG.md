@@ -1,3 +1,16 @@
+## 0.0.3
+
+*   **Router Support**:
+    *   `init` command now generates `lib/routes` with `app_routes.dart` and `app_pages.dart`.
+    *   `create:feature` automatically registers new pages and routes in the Router files.
+
+## 0.0.2
+
+*   **Enhanced Init Command**:
+    *   Added support for creating a new Flutter project from scratch: `getxcli init <project_name>`.
+    *   Automatically adds `get`, `dio`, `flutter_flavorizr` dependencies.
+    *   Configures Clean Architecture structure in the new project.
+
 ## 0.0.1
 
 *   **Initial Release**:
