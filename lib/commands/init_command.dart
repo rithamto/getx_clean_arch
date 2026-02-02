@@ -17,24 +17,47 @@ class InitCommand extends Command<int> {
 
   @override
   Future<int> run() async {
-    logger.info('Initializing project...');
-
     // 1. Verify environment
     if (!await _checkCommand('flutter') || !await _checkCommand('git')) {
       logger.err('Flutter and Git must be installed.');
       return ExitCode.software.code;
     }
 
-    // 2. Initialize flutter_flavorizr (Assuming it's added to pubspec.yaml by user or we add it)
-    // For now, we'll skip running flavorizr directly and just set up structure, as flavorizr is a separate tool.
-    // But the requirements say "Initialize flutter_flavorizr configuration".
-    // This typically means running `flutter pub run flutter_flavorizr:main` after adding it to pubspec.
+    final String? projectName = argResults!.rest.isNotEmpty
+        ? argResults!.rest.first
+        : null;
+    final String basePath = projectName == null ? '.' : projectName;
+
+    if (projectName != null) {
+      logger.info('Creating new Flutter project: \$projectName...');
+      final createResult = await Process.run('flutter', [
+        'create',
+        projectName,
+      ]);
+      if (createResult.exitCode != 0) {
+        logger.err(createResult.stderr.toString());
+        return createResult.exitCode;
+      }
+      logger.success('Flutter project created.');
+
+      // Add dependencies
+      logger.info('Adding dependencies...');
+      await Process.run('flutter', [
+        'pub',
+        'add',
+        'get',
+        'dio',
+        'flutter_flavorizr',
+      ], workingDirectory: basePath);
+    } else {
+      logger.info('Initializing in current directory...');
+    }
 
     // 3. Create Core Module structure
-    _createCoreStructure();
+    _createCoreStructure(basePath);
 
     // 4. Create DI
-    _createDependencyInjection();
+    _createDependencyInjection(basePath);
 
     logger.success('Project initialized successfully!');
     return ExitCode.success.code;
@@ -49,32 +72,32 @@ class InitCommand extends Command<int> {
     }
   }
 
-  void _createCoreStructure() {
-    FileUtils.createDirectory('lib/core/network', logger: logger);
-    FileUtils.createDirectory('lib/core/theme', logger: logger);
-    FileUtils.createDirectory('lib/core/style', logger: logger);
+  void _createCoreStructure(String basePath) {
+    FileUtils.createDirectory('$basePath/lib/core/network', logger: logger);
+    FileUtils.createDirectory('$basePath/lib/core/theme', logger: logger);
+    FileUtils.createDirectory('$basePath/lib/core/style', logger: logger);
 
     // Add Dio wrapper or other core files here if needed
     FileUtils.createFile(
-      'lib/core/network/dio_client.dart',
+      '$basePath/lib/core/network/dio_client.dart',
       _dioClientContent,
       logger: logger,
     );
     FileUtils.createFile(
-      'lib/core/theme/app_theme.dart',
+      '$basePath/lib/core/theme/app_theme.dart',
       '// App Theme',
       logger: logger,
     );
     FileUtils.createFile(
-      'lib/core/style/app_style.dart',
+      '$basePath/lib/core/style/app_style.dart',
       '// App Style',
       logger: logger,
     );
   }
 
-  void _createDependencyInjection() {
+  void _createDependencyInjection(String basePath) {
     FileUtils.createFile(
-      'lib/dependency_injection.dart',
+      '$basePath/lib/dependency_injection.dart',
       _diContent,
       logger: logger,
     );
