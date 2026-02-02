@@ -1,3 +1,10 @@
+## 0.0.4
+
+*   **App Entry Point Generation**:
+    *   `init` command now generates `lib/app.dart` with `GetMaterialApp` configuration.
+    *   `init` command now overwrites `lib/main.dart` with proper service initialization template.
+    *   Supports automatic package name detection from `pubspec.yaml`.
+
 ## 0.0.3
 
 *   **Router Support**:

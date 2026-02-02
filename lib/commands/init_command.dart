@@ -28,6 +28,8 @@ class InitCommand extends Command<int> {
         ? argResults!.rest.first
         : null;
     final String basePath = projectName == null ? '.' : projectName;
+    final String importPrefix =
+        projectName ?? await _getPackageNameFromPubspec(basePath);
 
     if (projectName != null) {
       logger.info('Creating new Flutter project: \$projectName...');
@@ -62,6 +64,9 @@ class InitCommand extends Command<int> {
 
     // 5. Create Router
     _createRouterStructure(basePath);
+
+    // 6. Create App Entry Point (app.dart and main.dart)
+    _createAppEntryPoint(basePath, importPrefix);
 
     logger.success('Project initialized successfully!');
     return ExitCode.success.code;
@@ -142,4 +147,33 @@ class DependencyInjection {
   }
 }
 ''';
+
+  void _createAppEntryPoint(String basePath, String importPrefix) {
+    FileUtils.createFile(
+      '$basePath/lib/app.dart',
+      Templates.app(importPrefix),
+      logger: logger,
+    );
+    FileUtils.createFile(
+      '$basePath/lib/main.dart',
+      Templates.main(importPrefix),
+      logger: logger,
+      overwrite: true,
+    );
+  }
+
+  Future<String> _getPackageNameFromPubspec(String basePath) async {
+    final pubspecFile = File('$basePath/pubspec.yaml');
+    if (await pubspecFile.exists()) {
+      final content = await pubspecFile.readAsString();
+      final nameMatch = RegExp(
+        r'^name:\s*(.+)$',
+        multiLine: true,
+      ).firstMatch(content);
+      if (nameMatch != null) {
+        return nameMatch.group(1)!.trim();
+      }
+    }
+    return 'my_app';
+  }
 }
