@@ -2,6 +2,7 @@ import 'dart:io';
 import 'package:args/command_runner.dart';
 import 'package:mason_logger/mason_logger.dart';
 import 'package:getx_clean_arch/getx_clean_arch.dart';
+import 'package:getx_clean_arch/common/templates/templates.dart';
 
 class InitCommand extends Command<int> {
   final Logger logger;
@@ -59,6 +60,9 @@ class InitCommand extends Command<int> {
     // 4. Create DI
     _createDependencyInjection(basePath);
 
+    // 5. Create Router
+    _createRouterStructure(basePath);
+
     logger.success('Project initialized successfully!');
     return ExitCode.success.code;
   }
@@ -99,6 +103,20 @@ class InitCommand extends Command<int> {
     FileUtils.createFile(
       '$basePath/lib/dependency_injection.dart',
       _diContent,
+      logger: logger,
+    );
+  }
+
+  void _createRouterStructure(String basePath) {
+    FileUtils.createDirectory('$basePath/lib/routes', logger: logger);
+    FileUtils.createFile(
+      '$basePath/lib/routes/app_routes.dart',
+      Templates.appRoutes,
+      logger: logger,
+    );
+    FileUtils.createFile(
+      '$basePath/lib/routes/app_pages.dart',
+      Templates.appPages,
       logger: logger,
     );
   }

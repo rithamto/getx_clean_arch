@@ -79,7 +79,8 @@ class CreateFeatureCommand extends Command<int> {
     // _updateDI(rc, packageName);
 
     // 5. Auto-register in Router
-    // _updateRouter(rc, routerType, packageName);
+    // 5. Auto-register in Router
+    _updateRouter(rc, routerType, packageName);
 
     logger.success('Feature $featureName created successfully!');
     return ExitCode.success.code;
@@ -93,5 +94,78 @@ class CreateFeatureCommand extends Command<int> {
     final content = pubspec.readAsStringSync();
     final doc = loadYaml(content);
     return doc['name'] as String;
+  }
+
+  void _updateRouter(ReCase rc, String routerType, String packageName) {
+    if (routerType != 'getx') return;
+
+    final routesFile = File('lib/routes/app_routes.dart');
+    final pagesFile = File('lib/routes/app_pages.dart');
+
+    if (!routesFile.existsSync() || !pagesFile.existsSync()) {
+      logger.warn('Router files not found. Skipping auto-registration.');
+      return;
+    }
+
+    // 1. Update Routes
+    var routesContent = routesFile.readAsStringSync();
+    if (!routesContent.contains('static const ${rc.constantCase}')) {
+      // Insert into Routes
+      // Find the last closing brace of Routes class, usually before "abstract class _Paths"
+      final routesClassEnd = routesContent.indexOf(
+        '}\n\nabstract class _Paths',
+      );
+      if (routesClassEnd != -1) {
+        routesContent =
+            routesContent.substring(0, routesClassEnd) +
+            '  static const ${rc.constantCase} = _Paths.${rc.constantCase};\n' +
+            routesContent.substring(routesClassEnd);
+      }
+
+      // Insert into _Paths
+      // Find the last closing brace of the file or _Paths class
+      final pathsClassEnd = routesContent.lastIndexOf('}');
+      if (pathsClassEnd != -1) {
+        routesContent =
+            routesContent.substring(0, pathsClassEnd) +
+            '  static const ${rc.constantCase} = \'/${rc.paramCase}\';\n' +
+            routesContent.substring(pathsClassEnd);
+      }
+
+      routesFile.writeAsStringSync(routesContent);
+      logger.detail('Updated app_routes.dart');
+    }
+
+    // 2. Update Pages
+    var pagesContent = pagesFile.readAsStringSync();
+    if (!pagesContent.contains('Routes.${rc.constantCase}')) {
+      // Add Import
+      if (!pagesContent.contains(
+        "import 'package:$packageName/features/${rc.snakeCase}/${rc.snakeCase}.dart';",
+      )) {
+        pagesContent =
+            "import 'package:$packageName/features/${rc.snakeCase}/${rc.snakeCase}.dart';\n" +
+            pagesContent;
+      }
+
+      // Add Page
+      final pageEntry =
+          '''
+    GetPage(
+      name: _Paths.${rc.constantCase},
+      page: () => const ${rc.pascalCase}Page(),
+      binding: ${rc.pascalCase}Binding(),
+    ),''';
+
+      if (pagesContent.contains('static final routes = [')) {
+        pagesContent = pagesContent.replaceFirst(
+          'static final routes = [',
+          'static final routes = [\n$pageEntry',
+        );
+      }
+
+      pagesFile.writeAsStringSync(pagesContent);
+      logger.detail('Updated app_pages.dart');
+    }
   }
 }
