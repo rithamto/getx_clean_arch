@@ -1,3 +1,12 @@
+## 0.0.9
+
+*   **Initialization Flow Optimization**:
+    *   Reordered `init` command steps to ensure `flutter_flavorizr` runs after dependencies and Firebase placeholders are created, but before the custom Clean Architecture setup.
+    *   This prevents Flavorizr from overwriting `main.dart` and `app.dart` with its own boilerplate.
+    *   Added automatic deletion of the generated `lib/flavor.dart` file to maintain a clean project structure.
+*   **Firebase Configuration**:
+    *   `_createFirebaseConfig` now runs earlier to provide the necessary files (`google-services.json`, `GoogleService-Info.plist`) required by Flavorizr for platform linking.
+
 ## 0.0.8
 
 *   **Robust Route Registration**:

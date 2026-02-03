@@ -66,26 +66,27 @@ class InitCommand extends Command<int> {
 
     logger.detail('Working directory: $basePath');
 
-    // Add dependencies
+    // 2. Add dependencies
     await _addDependencies(basePath, routerType);
 
-    // 3. Create Core Module structure
-    _createCoreStructure(basePath, importPrefix);
-
-    // 4. Create DI
-    _createDependencyInjection(basePath, routerType);
-
-    // 5. Create Router
-    _createRouterStructure(basePath, routerType, importPrefix);
-
-    // 6. Create App Entry Point (app.dart and main.dart)
-    _createAppEntryPoint(basePath, importPrefix, routerType);
-
-    // 7. Create Firebase Config
+    // 3. Create Firebase Config (Placeholders and options needed by Flavorizr)
     await _createFirebaseConfig(basePath, importPrefix);
 
-    // 8. Run Flavorizr
+    // 4. Setup and Run Flavorizr FIRST to avoid overwriting our architecture files
+    await _setupFlavorizrConfig(basePath);
     await _runFlavorizr(basePath);
+
+    // 5. Create Core Module structure
+    _createCoreStructure(basePath, importPrefix);
+
+    // 6. Create DI
+    _createDependencyInjection(basePath, routerType);
+
+    // 7. Create Router
+    _createRouterStructure(basePath, routerType, importPrefix);
+
+    // 8. Create App Entry Point (app.dart and main.dart)
+    _createAppEntryPoint(basePath, importPrefix, routerType);
 
     logger.success('Project initialized successfully!');
     return ExitCode.success.code;
@@ -351,7 +352,10 @@ class DependencyInjection {
       logger: logger,
     );
 
-    // Append flavorizr config to pubspec.yaml
+    logger.success('Firebase configuration created.');
+  }
+
+  Future<void> _setupFlavorizrConfig(String basePath) async {
     final pubspecFile = File('$basePath/pubspec.yaml');
     if (await pubspecFile.exists()) {
       final content = await pubspecFile.readAsString();
@@ -366,8 +370,6 @@ class DependencyInjection {
         ], workingDirectory: basePath);
       }
     }
-
-    logger.success('Firebase configuration created.');
   }
 
   Future<void> _runFlavorizr(String basePath) async {
@@ -394,6 +396,13 @@ class DependencyInjection {
 
       if (exitCode == 0) {
         logger.success('Flavorizr completed successfully.');
+
+        // Cleanup: remove the generated flavor.dart as we use our own setup
+        final flavorFile = File('$basePath/lib/flavor.dart');
+        if (await flavorFile.exists()) {
+          await flavorFile.delete();
+          logger.detail('Removed generated lib/flavor.dart');
+        }
       } else {
         logger.warn('Flavorizr failed with exit code $exitCode.');
         logger.warn('You may need to run it manually:');
