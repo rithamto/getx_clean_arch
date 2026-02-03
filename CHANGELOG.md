@@ -1,3 +1,14 @@
+## 0.0.6
+
+*   **Router Selection**:
+    *   `init` command now supports `--router` (`-r`) option to choose between `getx` (default) and `go` (GoRouter).
+    *   Added GoRouter templates: `app_routes.dart`, `app_pages.dart`, and `app.dart` with `MaterialApp.router`.
+*   **Enhanced Dependencies**:
+    *   `init` command now automatically adds `flutter_localizations` (SDK), `firebase_core`, and `google_fonts`.
+    *   Router-specific dependency: `get` for GetX or `go_router` for GoRouter.
+*   **Bug Fix**:
+    *   Fixed path resolution issue when creating new projects - now uses absolute path to ensure all commands run correctly in the new project directory.
+
 ## 0.0.5
 
 *   **Theme Generation**:

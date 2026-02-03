@@ -2,12 +2,19 @@ import 'dart:io';
 import 'package:args/command_runner.dart';
 import 'package:mason_logger/mason_logger.dart';
 import 'package:getx_clean_arch/getx_clean_arch.dart';
-import 'package:getx_clean_arch/common/templates/templates.dart';
 
 class InitCommand extends Command<int> {
   final Logger logger;
 
-  InitCommand({required this.logger});
+  InitCommand({required this.logger}) {
+    argParser.addOption(
+      'router',
+      abbr: 'r',
+      allowed: ['getx', 'go'],
+      defaultsTo: 'getx',
+      help: 'Router type to use (getx or go).',
+    );
+  }
 
   @override
   String get description =>
@@ -27,12 +34,16 @@ class InitCommand extends Command<int> {
     final String? projectName = argResults!.rest.isNotEmpty
         ? argResults!.rest.first
         : null;
-    final String basePath = projectName == null ? '.' : projectName;
-    final String importPrefix =
-        projectName ?? await _getPackageNameFromPubspec(basePath);
+    final String routerType = argResults!['router'] as String;
+
+    logger.info('Using router: $routerType');
+
+    // Determine base path - convert to absolute path for new projects
+    String basePath;
+    String importPrefix;
 
     if (projectName != null) {
-      logger.info('Creating new Flutter project: \$projectName...');
+      logger.info('Creating new Flutter project: $projectName...');
       final createResult = await Process.run('flutter', [
         'create',
         projectName,
@@ -43,30 +54,31 @@ class InitCommand extends Command<int> {
       }
       logger.success('Flutter project created.');
 
-      // Add dependencies
-      logger.info('Adding dependencies...');
-      await Process.run('flutter', [
-        'pub',
-        'add',
-        'get',
-        'dio',
-        'flutter_flavorizr',
-      ], workingDirectory: basePath);
+      // Use absolute path for the new project
+      basePath = Directory(projectName).absolute.path;
+      importPrefix = projectName;
     } else {
       logger.info('Initializing in current directory...');
+      basePath = Directory.current.path;
+      importPrefix = await _getPackageNameFromPubspec(basePath);
     }
+
+    logger.detail('Working directory: $basePath');
+
+    // Add dependencies
+    await _addDependencies(basePath, routerType);
 
     // 3. Create Core Module structure
     _createCoreStructure(basePath, importPrefix);
 
     // 4. Create DI
-    _createDependencyInjection(basePath);
+    _createDependencyInjection(basePath, routerType);
 
     // 5. Create Router
-    _createRouterStructure(basePath);
+    _createRouterStructure(basePath, routerType, importPrefix);
 
     // 6. Create App Entry Point (app.dart and main.dart)
-    _createAppEntryPoint(basePath, importPrefix);
+    _createAppEntryPoint(basePath, importPrefix, routerType);
 
     // 7. Create Firebase Config
     await _createFirebaseConfig(basePath, importPrefix);
@@ -121,26 +133,48 @@ class InitCommand extends Command<int> {
     );
   }
 
-  void _createDependencyInjection(String basePath) {
+  void _createDependencyInjection(String basePath, String routerType) {
+    final diContent = routerType == 'getx'
+        ? _diContentGetX
+        : _diContentGoRouter;
     FileUtils.createFile(
       '$basePath/lib/dependency_injection.dart',
-      _diContent,
+      diContent,
       logger: logger,
     );
   }
 
-  void _createRouterStructure(String basePath) {
+  void _createRouterStructure(
+    String basePath,
+    String routerType,
+    String importPrefix,
+  ) {
     FileUtils.createDirectory('$basePath/lib/routes', logger: logger);
-    FileUtils.createFile(
-      '$basePath/lib/routes/app_routes.dart',
-      Templates.appRoutes,
-      logger: logger,
-    );
-    FileUtils.createFile(
-      '$basePath/lib/routes/app_pages.dart',
-      Templates.appPages,
-      logger: logger,
-    );
+
+    if (routerType == 'getx') {
+      FileUtils.createFile(
+        '$basePath/lib/routes/app_routes.dart',
+        Templates.appRoutes,
+        logger: logger,
+      );
+      FileUtils.createFile(
+        '$basePath/lib/routes/app_pages.dart',
+        Templates.appPages,
+        logger: logger,
+      );
+    } else {
+      // GoRouter
+      FileUtils.createFile(
+        '$basePath/lib/routes/app_routes.dart',
+        Templates.appRoutesGoRouter,
+        logger: logger,
+      );
+      FileUtils.createFile(
+        '$basePath/lib/routes/app_pages.dart',
+        Templates.appPagesGoRouter(importPrefix),
+        logger: logger,
+      );
+    }
   }
 
   final String _dioClientContent = '''
@@ -155,7 +189,7 @@ class DioClient {
 }
 ''';
 
-  final String _diContent = '''
+  final String _diContentGetX = '''
 import 'package:get/get.dart';
 
 class DependencyInjection {
@@ -165,18 +199,96 @@ class DependencyInjection {
 }
 ''';
 
-  void _createAppEntryPoint(String basePath, String importPrefix) {
-    FileUtils.createFile(
-      '$basePath/lib/app.dart',
-      Templates.app(importPrefix),
-      logger: logger,
-    );
+  final String _diContentGoRouter = '''
+class DependencyInjection {
+  static Future<void> init() async {
+    // Initialize core services here
+  }
+}
+''';
+
+  void _createAppEntryPoint(
+    String basePath,
+    String importPrefix,
+    String routerType,
+  ) {
+    final appTemplate = routerType == 'getx'
+        ? Templates.app(importPrefix)
+        : Templates.appGoRouter(importPrefix);
+
+    FileUtils.createFile('$basePath/lib/app.dart', appTemplate, logger: logger);
     FileUtils.createFile(
       '$basePath/lib/main.dart',
       Templates.main(importPrefix),
       logger: logger,
       overwrite: true,
     );
+  }
+
+  /// Add dependencies to the project
+  Future<void> _addDependencies(String basePath, String routerType) async {
+    logger.info('Adding dependencies...');
+
+    // Core dependencies
+    final dependencies = [
+      'dio',
+      'flutter_flavorizr',
+      'firebase_core',
+      'google_fonts',
+    ];
+
+    // Add router-specific dependencies
+    if (routerType == 'getx') {
+      dependencies.add('get');
+    } else {
+      dependencies.add('go_router');
+    }
+
+    // Run flutter pub add for pub packages
+    await Process.run('flutter', [
+      'pub',
+      'add',
+      ...dependencies,
+    ], workingDirectory: basePath);
+    logger.detail('Added pub dependencies: ${dependencies.join(', ')}');
+
+    // Add flutter_localizations as SDK dependency
+    await _addFlutterLocalizationsDependency(basePath);
+  }
+
+  /// Add flutter_localizations SDK dependency to pubspec.yaml
+  Future<void> _addFlutterLocalizationsDependency(String basePath) async {
+    final pubspecFile = File('$basePath/pubspec.yaml');
+    if (!await pubspecFile.exists()) {
+      logger.warn('pubspec.yaml not found, skipping flutter_localizations.');
+      return;
+    }
+
+    var content = await pubspecFile.readAsString();
+
+    // Check if flutter_localizations already exists
+    if (content.contains('flutter_localizations:')) {
+      logger.detail('flutter_localizations already present.');
+      return;
+    }
+
+    // Find the flutter SDK dependency and add flutter_localizations after it
+    final flutterSdkPattern = RegExp(
+      r'(flutter:\s*\n\s*sdk:\s*flutter)',
+      multiLine: true,
+    );
+
+    if (flutterSdkPattern.hasMatch(content)) {
+      content = content.replaceFirstMapped(flutterSdkPattern, (match) {
+        return '''${match.group(0)}
+  flutter_localizations:
+    sdk: flutter''';
+      });
+      await pubspecFile.writeAsString(content);
+      logger.detail('Added flutter_localizations SDK dependency.');
+    } else {
+      logger.warn('Could not find flutter SDK dependency in pubspec.yaml.');
+    }
   }
 
   Future<String> _getPackageNameFromPubspec(String basePath) async {

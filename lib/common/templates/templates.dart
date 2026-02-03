@@ -555,4 +555,112 @@ flavorizr:
         firebase:
           config: ".firebase/prod/GoogleService-Info.plist"
 ''';
+
+  // ==================== GO ROUTER TEMPLATES ====================
+
+  static String get appRoutesGoRouter => '''
+/// Route names for the application.
+/// Use these constants for navigation instead of hardcoded strings.
+abstract class Routes {
+  Routes._();
+
+  static const String initial = '/';
+  // static const String home = '/home';
+}
+''';
+
+  static String appPagesGoRouter(String importPrefix) {
+    return '''
+import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
+
+/// Application router configuration using GoRouter.
+class AppRouter {
+  AppRouter._();
+
+  static final GoRouter router = GoRouter(
+    initialLocation: Routes.initial,
+    debugLogDiagnostics: true,
+    routes: <RouteBase>[
+      // GoRoute(
+      //   path: Routes.home,
+      //   name: 'home',
+      //   builder: (context, state) => const HomePage(),
+      // ),
+    ],
+    errorBuilder: (context, state) => Scaffold(
+      body: Center(
+        child: Text('Page not found: \${state.uri}'),
+      ),
+    ),
+  );
+}
+
+/// Route names for the application.
+abstract class Routes {
+  Routes._();
+
+  static const String initial = '/';
+  // static const String home = '/home';
+}
+''';
+  }
+
+  static String appGoRouter(String importPrefix) {
+    return '''
+import 'package:flutter/material.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:$importPrefix/routes/app_pages.dart';
+
+class App extends StatefulWidget {
+  const App({super.key});
+
+  @override
+  State<App> createState() => AppState();
+}
+
+class AppState extends State<App> with WidgetsBindingObserver {
+  // final languageCtrl = Get.put(LanguageController());
+
+  @override
+  void initState() {
+    WidgetsBinding.instance.addObserver(this);
+    super.initState();
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      // if (_state == AppLifecycleState.paused) {}
+    } else if (state == AppLifecycleState.paused) {}
+    super.didChangeAppLifecycleState(state);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp.router(
+      routerConfig: AppRouter.router,
+      title: "App Name", // GlobalConstants.kAppName
+      // supportedLocales: GlobalConstants.supportedLocales,
+      theme: ThemeData.light(), // MTheme.light
+      darkTheme: ThemeData.dark(), // MTheme.dark
+      // themeMode: StorageService.to.isDarkMode ? ThemeMode.dark : ThemeMode.light,
+      debugShowCheckedModeBanner: false,
+      localizationsDelegates: const [
+        GlobalMaterialLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+      ],
+      // fallbackLocale: LanguageUtil.fallbackLocale,
+    );
+  }
+}
+''';
+  }
 }
