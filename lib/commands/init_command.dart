@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:io';
 import 'package:args/command_runner.dart';
 import 'package:mason_logger/mason_logger.dart';
@@ -372,18 +373,36 @@ class DependencyInjection {
   Future<void> _runFlavorizr(String basePath) async {
     logger.info('Running flutter_flavorizr...');
 
-    final result = await Process.run('bash', [
-      '-c',
-      'yes | dart run flutter_flavorizr',
-    ], workingDirectory: basePath);
+    try {
+      final process = await Process.start(
+        'dart',
+        ['run', 'flutter_flavorizr', '-f'],
+        workingDirectory: basePath,
+        runInShell: true,
+      );
 
-    if (result.exitCode == 0) {
-      logger.success('Flavorizr completed successfully.');
-    } else {
-      logger.warn('Flavorizr failed. You may need to run it manually:');
+      // Stream output to the logger
+      process.stdout.transform(utf8.decoder).listen((data) {
+        logger.detail(data.trim());
+      });
+
+      process.stderr.transform(utf8.decoder).listen((data) {
+        logger.err(data.trim());
+      });
+
+      final exitCode = await process.exitCode;
+
+      if (exitCode == 0) {
+        logger.success('Flavorizr completed successfully.');
+      } else {
+        logger.warn('Flavorizr failed with exit code $exitCode.');
+        logger.warn('You may need to run it manually:');
+        logger.warn('  cd $basePath && flutter pub run flutter_flavorizr');
+      }
+    } catch (e) {
+      logger.err('Failed to start Flavorizr: $e');
+      logger.warn('You may need to run it manually:');
       logger.warn('  cd $basePath && flutter pub run flutter_flavorizr');
-      logger.detail('Stdout: ${result.stdout}');
-      logger.err('Stderr: ${result.stderr}');
     }
   }
 }

@@ -75,12 +75,10 @@ part of 'app_pages.dart';
 
 abstract class Routes {
   Routes._();
-  // static const HOME = _Paths.HOME;
 }
 
 abstract class _Paths {
   _Paths._();
-  // static const HOME = '/home';
 }
 ''';
 
@@ -91,14 +89,7 @@ part 'app_routes.dart';
 class AppPages {
   AppPages._();
 
-  // static const INITIAL = Routes.HOME;
-
   static final routes = [
-    // GetPage(
-    //   name: _Paths.HOME,
-    //   page: () => const HomePage(),
-    //   binding: HomeBinding(),
-    // ),
   ];
 }
 ''';
@@ -562,7 +553,6 @@ abstract class Routes {
   Routes._();
 
   static const String initial = '/';
-  // static const String home = '/home';
 }
 ''';
 
@@ -580,11 +570,6 @@ class AppRouter {
     initialLocation: Routes.initial,
     debugLogDiagnostics: true,
     routes: <RouteBase>[
-      // GoRoute(
-      //   path: Routes.home,
-      //   name: 'home',
-      //   builder: (context, state) => const HomePage(),
-      // ),
     ],
     errorBuilder: (context, state) => Scaffold(
       body: Center(

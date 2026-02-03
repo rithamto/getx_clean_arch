@@ -91,14 +91,19 @@ The CLI enforces a **Feature-First** Clean Architecture:
 
 ```
 lib/
-├── common/             # Shared utilities, widgets, templates
-├── core/               # Core application logic (Network, Theme, Config)
+├── app.dart            # Main App widget configuration
+├── firebase_options.dart # Flavor-aware Firebase configuration
+├── main.dart           # Entry point with service initialization
+├── common/             # Shared utilities, widgets, themes, language
+│   └── themes/         # Light/Dark theme configuration (MColors, MTheme)
+├── core/               # Core application logic (Network, Config)
 ├── features/           # Feature modules (Auth, Home, Profile...)
 │   └── home/
 │       ├── bindings/
 │       ├── controllers/
 │       ├── pages/
 │       └── home.dart   # Barrel file
+├── routes/             # App Router (AppPages, AppRoutes)
 └── dependency_injection.dart
 ```
 

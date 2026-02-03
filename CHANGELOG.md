@@ -1,3 +1,15 @@
+## 0.0.8
+
+*   **Robust Route Registration**:
+    *   `create:feature` now uses feature-specific imports to verify registration, preventing false positives from commented-out code in templates.
+    *   Improved insertion logic using class markers (`abstract class Routes {`) for more reliable code generation.
+    *   Changed route registration logs from `detail` to `success` for better visibility.
+*   **Flavorizr Fixes**:
+    *   Fixed "No terminal attached to stdout" error by adding the `-f` (force) flag to skip confirmation prompts.
+    *   Upgraded `_runFlavorizr` to use `Process.start` for real-time output streaming and better user feedback.
+*   **Template Cleanup**:
+    *   Refactored `app_pages.dart` and `app_routes.dart` templates to be more minimal and less prone to registration conflicts.
+
 ## 0.0.7
 
 *   **Router & GetX Integration**:
