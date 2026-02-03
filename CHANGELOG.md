@@ -1,3 +1,16 @@
+## 0.0.7
+
+*   **Router & GetX Integration**:
+    *   `init` command now always adds the `get` dependency, fulfilling the requirement for state management even when using GoRouter.
+    *   `create:feature` now automatically registers new features in `app_pages.dart` and `app_routes.dart` for both GetX and GoRouter.
+*   **Enhanced Flavorizr setup**:
+    *   Moved `flutter_flavorizr` to `dev_dependencies`.
+    *   Automatically runs `flutter pub get` after appending flavorizr configuration to ensure the environment is ready.
+    *   Uses non-interactive execution (`yes | dart run flutter_flavorizr`) to improve automation reliability.
+    *   Improved error reporting and logging for flavorizr execution.
+*   **Template Fixes**:
+    *   Fixed GoRouter `app_pages.dart` template to correctly import `app_routes.dart` and removed redundant `Routes` class definition.
+
 ## 0.0.6
 
 *   **Router Selection**:

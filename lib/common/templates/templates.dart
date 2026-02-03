@@ -522,14 +522,11 @@ class DefaultFirebaseOptions {
   }
 
   static String get flavorizrConfig => '''
-
 # Flutter Flavorizr Configuration
 flavorizr:
   app:
     android:
       flavorDimensions: "flavor-type"
-    ios:
-  
   flavors:
     dev:
       app:
@@ -573,6 +570,7 @@ abstract class Routes {
     return '''
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:$importPrefix/routes/app_routes.dart';
 
 /// Application router configuration using GoRouter.
 class AppRouter {
@@ -594,14 +592,6 @@ class AppRouter {
       ),
     ),
   );
-}
-
-/// Route names for the application.
-abstract class Routes {
-  Routes._();
-
-  static const String initial = '/';
-  // static const String home = '/home';
 }
 ''';
   }

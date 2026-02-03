@@ -97,8 +97,14 @@ class CreateFeatureCommand extends Command<int> {
   }
 
   void _updateRouter(ReCase rc, String routerType, String packageName) {
-    if (routerType != 'getx') return;
+    if (routerType == 'getx') {
+      _updateGetXRouter(rc, packageName);
+    } else if (routerType == 'go') {
+      _updateGoRouter(rc, packageName);
+    }
+  }
 
+  void _updateGetXRouter(ReCase rc, String packageName) {
     final routesFile = File('lib/routes/app_routes.dart');
     final pagesFile = File('lib/routes/app_pages.dart');
 
@@ -111,7 +117,6 @@ class CreateFeatureCommand extends Command<int> {
     var routesContent = routesFile.readAsStringSync();
     if (!routesContent.contains('static const ${rc.constantCase}')) {
       // Insert into Routes
-      // Find the last closing brace of Routes class, usually before "abstract class _Paths"
       final routesClassEnd = routesContent.indexOf(
         '}\n\nabstract class _Paths',
       );
@@ -123,7 +128,6 @@ class CreateFeatureCommand extends Command<int> {
       }
 
       // Insert into _Paths
-      // Find the last closing brace of the file or _Paths class
       final pathsClassEnd = routesContent.lastIndexOf('}');
       if (pathsClassEnd != -1) {
         routesContent =
@@ -133,22 +137,20 @@ class CreateFeatureCommand extends Command<int> {
       }
 
       routesFile.writeAsStringSync(routesContent);
-      logger.detail('Updated app_routes.dart');
+      logger.detail('Updated app_routes.dart for GetX');
     }
 
     // 2. Update Pages
     var pagesContent = pagesFile.readAsStringSync();
     if (!pagesContent.contains('Routes.${rc.constantCase}')) {
       // Add Import
-      if (!pagesContent.contains(
-        "import 'package:$packageName/features/${rc.snakeCase}/${rc.snakeCase}.dart';",
-      )) {
-        pagesContent =
-            "import 'package:$packageName/features/${rc.snakeCase}/${rc.snakeCase}.dart';\n" +
-            pagesContent;
+      final featureImport =
+          "import 'package:$packageName/features/${rc.snakeCase}/${rc.snakeCase}.dart';";
+      if (!pagesContent.contains(featureImport)) {
+        pagesContent = "$featureImport\n$pagesContent";
       }
 
-      // Add Page
+      // Add Page Page
       final pageEntry =
           '''
     GetPage(
@@ -165,7 +167,61 @@ class CreateFeatureCommand extends Command<int> {
       }
 
       pagesFile.writeAsStringSync(pagesContent);
-      logger.detail('Updated app_pages.dart');
+      logger.detail('Updated app_pages.dart for GetX');
+    }
+  }
+
+  void _updateGoRouter(ReCase rc, String packageName) {
+    final routesFile = File('lib/routes/app_routes.dart');
+    final pagesFile = File('lib/routes/app_pages.dart');
+
+    if (!routesFile.existsSync() || !pagesFile.existsSync()) {
+      logger.warn('Router files not found. Skipping auto-registration.');
+      return;
+    }
+
+    // 1. Update Routes
+    var routesContent = routesFile.readAsStringSync();
+    if (!routesContent.contains('static const String ${rc.camelCase}')) {
+      final lastBrace = routesContent.lastIndexOf('}');
+      if (lastBrace != -1) {
+        routesContent =
+            routesContent.substring(0, lastBrace) +
+            '  static const String ${rc.camelCase} = \'/${rc.paramCase}\';\n' +
+            routesContent.substring(lastBrace);
+        routesFile.writeAsStringSync(routesContent);
+        logger.detail('Updated app_routes.dart for GoRouter');
+      }
+    }
+
+    // 2. Update Pages
+    var pagesContent = pagesFile.readAsStringSync();
+    if (!pagesContent.contains('Routes.${rc.camelCase}')) {
+      // Add Import
+      final featureImport =
+          "import 'package:$packageName/features/${rc.snakeCase}/${rc.snakeCase}.dart';";
+      if (!pagesContent.contains(featureImport)) {
+        pagesContent = "$featureImport\n$pagesContent";
+      }
+
+      // Add GoRoute
+      final routeEntry =
+          '''
+      GoRoute(
+        path: Routes.${rc.camelCase},
+        name: '${rc.paramCase}',
+        builder: (context, state) => const ${rc.pascalCase}Page(),
+      ),''';
+
+      if (pagesContent.contains('routes: <RouteBase>[')) {
+        pagesContent = pagesContent.replaceFirst(
+          'routes: <RouteBase>[',
+          'routes: <RouteBase>[\n$routeEntry',
+        );
+      }
+
+      pagesFile.writeAsStringSync(pagesContent);
+      logger.detail('Updated app_pages.dart for GoRouter');
     }
   }
 }

@@ -230,17 +230,10 @@ class DependencyInjection {
     logger.info('Adding dependencies...');
 
     // Core dependencies
-    final dependencies = [
-      'dio',
-      'flutter_flavorizr',
-      'firebase_core',
-      'google_fonts',
-    ];
+    final dependencies = ['dio', 'firebase_core', 'google_fonts', 'get'];
 
     // Add router-specific dependencies
-    if (routerType == 'getx') {
-      dependencies.add('get');
-    } else {
+    if (routerType == 'go') {
       dependencies.add('go_router');
     }
 
@@ -250,7 +243,17 @@ class DependencyInjection {
       'add',
       ...dependencies,
     ], workingDirectory: basePath);
+
+    // Add dev dependencies
+    await Process.run('flutter', [
+      'pub',
+      'add',
+      '--dev',
+      'flutter_flavorizr',
+    ], workingDirectory: basePath);
+
     logger.detail('Added pub dependencies: ${dependencies.join(', ')}');
+    logger.detail('Added dev dependencies: flutter_flavorizr');
 
     // Add flutter_localizations as SDK dependency
     await _addFlutterLocalizationsDependency(basePath);
@@ -316,7 +319,7 @@ class DependencyInjection {
     FileUtils.createDirectory('$basePath/.firebase/dev', logger: logger);
     FileUtils.createDirectory('$basePath/.firebase/prod', logger: logger);
 
-    // Create google-services.json for each flavor
+    // Create google_services.json for each flavor
     FileUtils.createFile(
       '$basePath/.firebase/dev/google-services.json',
       Templates.googleServicesJson('dev'),
@@ -351,9 +354,15 @@ class DependencyInjection {
     final pubspecFile = File('$basePath/pubspec.yaml');
     if (await pubspecFile.exists()) {
       final content = await pubspecFile.readAsString();
-      if (!content.contains('flavorizr:')) {
+      if (!content.contains('\nflavorizr:')) {
         await pubspecFile.writeAsString(content + Templates.flavorizrConfig);
         logger.detail('Added flavorizr configuration to pubspec.yaml');
+
+        // Run pub get to ensure flavorizr config is recognized
+        await Process.run('flutter', [
+          'pub',
+          'get',
+        ], workingDirectory: basePath);
       }
     }
 
@@ -363,10 +372,9 @@ class DependencyInjection {
   Future<void> _runFlavorizr(String basePath) async {
     logger.info('Running flutter_flavorizr...');
 
-    final result = await Process.run('flutter', [
-      'pub',
-      'run',
-      'flutter_flavorizr',
+    final result = await Process.run('bash', [
+      '-c',
+      'yes | dart run flutter_flavorizr',
     ], workingDirectory: basePath);
 
     if (result.exitCode == 0) {
@@ -374,7 +382,8 @@ class DependencyInjection {
     } else {
       logger.warn('Flavorizr failed. You may need to run it manually:');
       logger.warn('  cd $basePath && flutter pub run flutter_flavorizr');
-      logger.detail(result.stderr.toString());
+      logger.detail('Stdout: ${result.stdout}');
+      logger.err('Stderr: ${result.stderr}');
     }
   }
 }

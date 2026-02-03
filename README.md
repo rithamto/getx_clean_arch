@@ -4,11 +4,11 @@ A powerful CLI tool for scaffolding and managing Flutter projects with **GetX** 
 
 ## 🚀 Features
 
--   **Project Initialization**: Sets up the core structure (Network, Theme, Style) and Dependency Injection.
--   **Feature Generation**: Automatically creates Clean Architecture layers (`bindings`, `controllers`, `pages`, `models`, `widgets`) with a single command.
+-   **Project Initialization**: Sets up the core structure (Network, Theme, Style) and Dependency Injection. Automatically configures Flavors and Firebase placeholders.
+-   **Feature Generation**: Automatically creates Clean Architecture layers (`bindings`, `controllers`, `pages`, `models`, `widgets`) and **registers them in the routing system** automatically.
 -   **Asset Generation**: Scans your `assets` folder and generates a type-safe `Assets` class.
 -   **Utilities**: Shortcuts for common tasks like project refresh, git branching, and running specific flavors.
--   **Router Support**: Ready for GetX Router (and planned GoRouter support).
+-   **Router Support**: Full support for both **GetX Router** and **GoRouter**. GetX is always included for state management.
 
 ## 🛠 Installation & Usage
 
