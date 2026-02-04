@@ -1,3 +1,9 @@
+## 0.1.2
+
+*   **Maintenance & Dependency Updates**:
+    *   Upgraded core CLI dependencies to their latest versions for improved stability and performance.
+    *   Updated `args`, `mason_logger`, `path`, `dart_style`, and `dcli` (major upgrade to v8).
+
 ## 0.1.1
 
 *   **Named Nested Barrel Files**:
