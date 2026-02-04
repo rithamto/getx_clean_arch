@@ -1,6 +1,6 @@
 name: getx_clean_arch
 description: "A CLI tool for scaffolding and managing Flutter projects with GetX and Clean Architecture."
-version: 0.1.1
+version: 0.1.2
 repository: https://github.com/your_username/getx_clean_arch
 issue_tracker: https://github.com/your_username/getx_clean_arch/issues
 topics:
@@ -18,12 +18,12 @@ dependencies:
   flutter:
     sdk: flutter
   dio: ^5.9.1
-  args: ^2.4.2
-  mason_logger: ^0.2.10
-  path: ^1.9.0
+  args: ^2.7.0
+  mason_logger: ^0.3.3
+  path: ^1.9.1
   recase: ^4.1.0
-  dart_style: ^2.3.2
-  dcli: ^4.0.1
+  dart_style: ^3.1.5
+  dcli: ^8.4.2
   get: ^4.7.3
   yaml: ^3.1.3
 
