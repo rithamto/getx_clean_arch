@@ -1,3 +1,10 @@
+## 0.1.1
+
+*   **Named Nested Barrel Files**:
+    *   `create:feature` now generates named barrel files (`<folder_name>.dart`) for each subdirectory (e.g., `bindings/bindings.dart`) instead of generic `index.dart` files.
+    *   Updated the main feature barrel template to automatically export these named sub-barrels, improving project clarity and navigation.
+    *   Ensures that every directory in a new feature follows the project's architectural standards for exports.
+
 ## 0.1.0
 
 *   **Aggressive Project Cleanup**:

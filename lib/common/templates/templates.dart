@@ -58,15 +58,21 @@ class ${rc.pascalCase}Page extends GetView<${rc.pascalCase}Controller> {
   }
 
   static String barrel(String name) {
-    final rc = ReCase(name);
     return '''
-export 'bindings/${rc.snakeCase}_binding.dart';
-export 'controllers/${rc.snakeCase}_controller.dart';
-export 'pages/${rc.snakeCase}_page.dart';
-// export 'models/model.dart';
-// export 'widgets/widget.dart';
-// export 'dialog/dialog.dart';
+export 'bindings/bindings.dart';
+export 'controllers/controllers.dart';
+export 'dialog/dialog.dart';
+export 'models/models.dart';
+export 'pages/pages.dart';
+export 'widgets/widgets.dart';
 ''';
+  }
+
+  static String subBarrel([List<String> exports = const []]) {
+    if (exports.isEmpty) {
+      return '// Export files here\n';
+    }
+    return '${exports.map((e) => "export '$e';").join('\n')}\n';
   }
 
   static String get appRoutes => '''

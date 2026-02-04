@@ -50,25 +50,61 @@ class CreateFeatureCommand extends Command<int> {
     // 2. Get Package Name (prefix)
     final packageName = _getPackageName();
 
-    // 3. Create Files
+    // 3. Create Files and Sub-Barrels
+    // Bindings
     FileUtils.createFile(
       '$featurePath/bindings/${rc.snakeCase}_binding.dart',
       Templates.binding(featureName, packageName),
       logger: logger,
     );
+    FileUtils.createFile(
+      '$featurePath/bindings/bindings.dart',
+      Templates.subBarrel(['${rc.snakeCase}_binding.dart']),
+      logger: logger,
+    );
 
+    // Controllers
     FileUtils.createFile(
       '$featurePath/controllers/${rc.snakeCase}_controller.dart',
       Templates.controller(featureName),
       logger: logger,
     );
+    FileUtils.createFile(
+      '$featurePath/controllers/controllers.dart',
+      Templates.subBarrel(['${rc.snakeCase}_controller.dart']),
+      logger: logger,
+    );
 
+    // Pages
     FileUtils.createFile(
       '$featurePath/pages/${rc.snakeCase}_page.dart',
       Templates.page(featureName, packageName),
       logger: logger,
     );
+    FileUtils.createFile(
+      '$featurePath/pages/pages.dart',
+      Templates.subBarrel(['${rc.snakeCase}_page.dart']),
+      logger: logger,
+    );
 
+    // Other folders (Empty barrels)
+    FileUtils.createFile(
+      '$featurePath/dialog/dialog.dart',
+      Templates.subBarrel(),
+      logger: logger,
+    );
+    FileUtils.createFile(
+      '$featurePath/models/models.dart',
+      Templates.subBarrel(),
+      logger: logger,
+    );
+    FileUtils.createFile(
+      '$featurePath/widgets/widgets.dart',
+      Templates.subBarrel(),
+      logger: logger,
+    );
+
+    // Main Feature Barrel
     FileUtils.createFile(
       '$featurePath/${rc.snakeCase}.dart',
       Templates.barrel(featureName),
