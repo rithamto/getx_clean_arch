@@ -1,3 +1,17 @@
+## 0.1.3
+
+*   **Android Build Configuration**:
+    *   `init` command now automatically sets up `android/app/build.gradle.kts` and `android/settings.gradle.kts`.
+    *   Replaces legacy Groovy configurations with modern Kotlin DSL templates.
+    *   Includes boilerplate for `key.properties`, signing configs, and versioning based on Flutter build arguments.
+*   **Flutter Launcher Icons**:
+    *   Added standard `flutter_launcher_icons` configuration to `pubspec.yaml` during initialization.
+    *   Automatically adds `flutter_launcher_icons` to `dev_dependencies`.
+*   **Pubspec Optimization**:
+    *   Cleaned up `pubspec.yaml` generation by stripping instructional comments.
+    *   Added `firebase_messaging`, `firebase_analytics`, and `firebase_crashlytics` to default dependencies.
+    *   Implemented dependency grouping to organize all `#firebase` related packages together.
+
 ## 0.1.2
 
 *   **Maintenance & Dependency Updates**:

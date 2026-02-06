@@ -76,16 +76,22 @@ class InitCommand extends Command<int> {
     await _setupFlavorizrConfig(basePath);
     await _runFlavorizr(basePath);
 
-    // 5. Create Core Module structure
+    // 5. Setup Flutter Launcher Icons
+    await _setupFlutterLauncherIconsConfig(basePath);
+
+    // 6. Setup Android Build Config
+    await _setupAndroidBuild(basePath);
+
+    // 7. Create Core Module structure
     _createCoreStructure(basePath, importPrefix);
 
-    // 6. Create DI
+    // 8. Create DI
     _createDependencyInjection(basePath, routerType);
 
-    // 7. Create Router
+    // 9. Create Router
     _createRouterStructure(basePath, routerType, importPrefix);
 
-    // 8. Create App Entry Point (app.dart and main.dart)
+    // 10. Create App Entry Point (app.dart and main.dart)
     _createAppEntryPoint(basePath, importPrefix, routerType);
 
     logger.success('Project initialized successfully!');
@@ -237,7 +243,15 @@ class DependencyInjection {
     logger.info('Adding dependencies...');
 
     // Core dependencies
-    final dependencies = ['dio', 'firebase_core', 'google_fonts', 'get'];
+    final dependencies = [
+      'dio',
+      'firebase_core',
+      'firebase_messaging',
+      'firebase_analytics',
+      'firebase_crashlytics',
+      'google_fonts',
+      'get',
+    ];
 
     // Add router-specific dependencies
     if (routerType == 'go') {
@@ -257,13 +271,74 @@ class DependencyInjection {
       'add',
       '--dev',
       'flutter_flavorizr',
+      'flutter_launcher_icons',
     ], workingDirectory: basePath);
 
     logger.detail('Added pub dependencies: ${dependencies.join(', ')}');
-    logger.detail('Added dev dependencies: flutter_flavorizr');
+    logger.detail(
+      'Added dev dependencies: flutter_flavorizr, flutter_launcher_icons',
+    );
 
     // Add flutter_localizations as SDK dependency
     await _addFlutterLocalizationsDependency(basePath);
+
+    // Clean and group pubspec.yaml (remove comments, group Firebase)
+    await _cleanAndGroupPubspec(basePath);
+  }
+
+  /// Clean pubspec.yaml: remove comments and group Firebase dependencies
+  Future<void> _cleanAndGroupPubspec(String basePath) async {
+    final pubspecFile = File('$basePath/pubspec.yaml');
+    if (!await pubspecFile.exists()) return;
+
+    final lines = await pubspecFile.readAsLines();
+    final cleanedLines = <String>[];
+    final firebaseLines = <String>[];
+    bool inDependencies = false;
+
+    for (final line in lines) {
+      final trimmed = line.trim();
+      // Skip pure comment lines
+      if (trimmed.startsWith('#') && !trimmed.startsWith('#firebase')) {
+        continue;
+      }
+
+      // Detect dependencies section
+      if (trimmed == 'dependencies:') {
+        inDependencies = true;
+        cleanedLines.add(line);
+        continue;
+      }
+
+      // If we are in dependencies section (and not dev_dependencies yet), look for Firebase
+      if (inDependencies) {
+        if (trimmed == 'dev_dependencies:' ||
+            trimmed == 'flutter_launcher_icons:') {
+          inDependencies = false;
+        }
+
+        if (inDependencies && trimmed.startsWith('firebase_')) {
+          firebaseLines.add(line);
+          continue; // Don't add to main list yet
+        }
+      }
+
+      cleanedLines.add(line);
+    }
+
+    // Insert grouped Firebase dependencies
+    if (firebaseLines.isNotEmpty) {
+      final depIndex = cleanedLines.indexOf('dependencies:');
+      if (depIndex != -1) {
+        // Insert after 'dependencies:'
+        cleanedLines.insert(depIndex + 1, '');
+        cleanedLines.insert(depIndex + 2, '  #firebase');
+        cleanedLines.insertAll(depIndex + 3, firebaseLines);
+      }
+    }
+
+    await pubspecFile.writeAsString(cleanedLines.join('\n'));
+    logger.detail('Cleaned and grouped pubspec.yaml');
   }
 
   /// Add flutter_localizations SDK dependency to pubspec.yaml
@@ -314,6 +389,31 @@ class DependencyInjection {
       }
     }
     return 'my_app';
+  }
+
+  Future<Map<String, String>> _getPackageNameAndDescription(
+    String basePath,
+  ) async {
+    final pubspecFile = File('$basePath/pubspec.yaml');
+    final result = <String, String>{};
+    if (await pubspecFile.exists()) {
+      final content = await pubspecFile.readAsString();
+      final nameMatch = RegExp(
+        r'^name:\s*(.+)$',
+        multiLine: true,
+      ).firstMatch(content);
+      if (nameMatch != null) {
+        result['name'] = nameMatch.group(1)!.trim();
+      }
+      final descMatch = RegExp(
+        r'^description:\s*(.+)$',
+        multiLine: true,
+      ).firstMatch(content);
+      if (descMatch != null) {
+        result['description'] = descMatch.group(1)!.trim();
+      }
+    }
+    return result;
   }
 
   Future<void> _createFirebaseConfig(
@@ -375,6 +475,74 @@ class DependencyInjection {
         ], workingDirectory: basePath);
       }
     }
+  }
+
+  Future<void> _setupFlutterLauncherIconsConfig(String basePath) async {
+    final pubspecFile = File('$basePath/pubspec.yaml');
+    if (await pubspecFile.exists()) {
+      final content = await pubspecFile.readAsString();
+      if (!content.contains('flutter_launcher_icons:')) {
+        await pubspecFile.writeAsString('''$content
+flutter_launcher_icons:
+  android: "launcher_icon"
+  ios: true
+  remove_alpha_ios: true
+  adaptive_icon_background: "#3792BC"
+  background_color_ios: "#3792BC"
+  adaptive_icon_foreground: "assets/images/png/app_ic.png"
+  image_path: "assets/images/png/app_ic.png"
+  image_path_ios: "ios/Runner/Assets.xcassets/AppIcon.appiconset/Icon-App-1024x1024@1x.png"
+''');
+        logger.detail(
+          'Added flutter_launcher_icons configuration to pubspec.yaml',
+        );
+      }
+    }
+  }
+
+  Future<void> _setupAndroidBuild(String basePath) async {
+    logger.info('Configuring Android build settings...');
+
+    final pubspecParams = await _getPackageNameAndDescription(basePath);
+    final packageName = pubspecParams['name'] ?? 'my_app';
+    // Default namespace and appId logic similar to what typical flutter create does or customized
+    // Here we assume a standard pattern com.example.projectname if not provided,
+    // but the template expects us to pass it.
+    // For now, let's use a standard default or derive from package name.
+    // "com.example.eat_clean" was the user's sample.
+    // Let's use "com.example.$packageName" as a safe default if we can't infer better.
+    final namespace = 'com.example.$packageName';
+    final applicationId = 'com.example.$packageName';
+
+    // Remove existing gradle files
+    final filesToDelete = [
+      '$basePath/android/app/build.gradle',
+      '$basePath/android/settings.gradle',
+      '$basePath/android/build.gradle', // Removed in favor of settings.gradle.kts management if present
+    ];
+
+    for (final path in filesToDelete) {
+      final file = File(path);
+      if (await file.exists()) {
+        await file.delete();
+        logger.detail('Removed $path');
+      }
+    }
+
+    // Write new .kts files
+    FileUtils.createFile(
+      '$basePath/android/app/build.gradle.kts',
+      Templates.androidAppBuildGradleKts(namespace, applicationId),
+      logger: logger,
+    );
+
+    FileUtils.createFile(
+      '$basePath/android/settings.gradle.kts',
+      Templates.androidSettingsGradleKts,
+      logger: logger,
+    );
+
+    logger.success('Android build settings configured.');
   }
 
   Future<void> _runFlavorizr(String basePath) async {
